@@ -8,6 +8,7 @@ import shutil
 import arrow
 import html
 import re
+import pdfkit
 
 
 class Mbs(object):
@@ -15,12 +16,14 @@ class Mbs(object):
     def __init__(self, repository=None, destination=None, sources_pull=True):
         self.repository = repository if repository else config.REPOSITORY_URL
         self.destination = os.path.join(destination if destination else config.DESTINATION)
-        self.sources_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sources')
+        self.app_path = os.path.dirname(os.path.realpath(__file__))
+        self.sources_path = os.path.join(self.app_path, 'sources')
         self.sources_pull = sources_pull
         self.date = arrow.now().format('YYYY-MM-DD_HH-mm')
         self.files_path = os.path.join(self.destination, self.date)
         self.txt_path = os.path.join(self.files_path, 'sources.txt')
         self.html_path = os.path.join(self.files_path, 'sources.html')
+        self.pdf_path = os.path.join(self.files_path, 'sources.pdf')
 
         shutil.rmtree(self.files_path, ignore_errors=True)
         os.makedirs(self.files_path, exist_ok=True)
@@ -44,6 +47,8 @@ class Mbs(object):
         """
         Make files from sources
         """
+        with open(self.html_path, 'a+') as html_file:
+            html_file.write('<html><head><meta charset="utf-8"></head><body>')
 
         for source in config.SOURCE_DIRS:
 
@@ -71,6 +76,13 @@ class Mbs(object):
                                     separator='-' * 80, header=name, text=html.escape(text)
                                 )
                             )
+
+        with open(self.html_path, 'a+') as html_file:
+            html_file.write('</body></html>')
+        # pdf generation
+        pdfkit.from_file(self.html_path, self.pdf_path, {
+            'encoding': "UTF-8", 'footer-center': '[page]/[topage]',
+        })
 
         return self
 
