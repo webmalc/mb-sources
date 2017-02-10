@@ -7,6 +7,7 @@ import git
 import shutil
 import arrow
 import html
+import re
 
 
 class Mbs(object):
@@ -54,7 +55,7 @@ class Mbs(object):
                         continue
                     name = path + os.sep + file
                     with open(os.path.join(root + os.sep + file)) as source_file:
-                        text = source_file.read()
+                        text = re.sub('@author.*', '', source_file.read())
 
                         # txt file generation
                         with open(self.txt_path, 'a+') as txt:
