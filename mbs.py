@@ -6,6 +6,7 @@ import config
 import git
 import shutil
 import arrow
+import html
 
 
 class Mbs(object):
@@ -18,6 +19,7 @@ class Mbs(object):
         self.date = arrow.now().format('YYYY-MM-DD_HH-mm')
         self.files_path = os.path.join(self.destination, self.date)
         self.txt_path = os.path.join(self.files_path, 'sources.txt')
+        self.html_path = os.path.join(self.files_path, 'sources.html')
 
         shutil.rmtree(self.files_path, ignore_errors=True)
         os.makedirs(self.files_path, exist_ok=True)
@@ -52,10 +54,20 @@ class Mbs(object):
                         continue
                     name = path + os.sep + file
                     with open(os.path.join(root + os.sep + file)) as source_file:
+                        text = source_file.read()
+
+                        # txt file generation
                         with open(self.txt_path, 'a+') as txt:
                             txt.write(
                                 '{separator}\n{header}\n{separator}\n\n{text}\n\n'.format(
-                                    separator='-' * 80, header=name, text=source_file.read()
+                                    separator='-' * 80, header=name, text=text
+                                )
+                            )
+                        # html file generation
+                        with open(self.html_path, 'a+') as html_file:
+                            html_file.write(
+                                '<h4>{header}</h4><pre>{text}</pre>'.format(
+                                    separator='-' * 80, header=name, text=html.escape(text)
                                 )
                             )
 
@@ -93,6 +105,5 @@ if __name__ == '__main__':
     mbs = Mbs(destination=args.destination, repository=args.repository, sources_pull=not args.ignore_git_pull)
     mbs.process()
 
-    print(args)
-    print(mbs)
+    print('{}Generation completed. Files directory: {}{}'.format('\033[92m', mbs.files_path, '\033[0m'))
 
